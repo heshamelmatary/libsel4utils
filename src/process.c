@@ -232,7 +232,7 @@ sel4utils_spawn_process_v(sel4utils_process_t *process, vka_t *vka, vspace_t *vs
     sprintf(ipc_buf_env, "IPCBUFFER=0x%x", process->thread.ipc_buffer_addr);
     char *envp[] = {ipc_buf_env};
     int auxc = process->sysinfo ? 1 : 0;
-#if defined(CONFIG_ARCH_IA32) || defined(CONFIG_ARCH_ARM)
+#if defined(CONFIG_ARCH_IA32) || defined(CONFIG_ARCH_ARM) || defined(CONFIG_ARCH_RISCV)
     Elf32_auxv_t auxv[] = { {.a_type = AT_SYSINFO, .a_un = {process->sysinfo}}};
 #elif defined(CONFIG_X86_64)
     Elf64_auxv_t auxv[] = { {.a_type = AT_SYSINFO, .a_un = {process->sysinfo}}};
@@ -257,7 +257,7 @@ sel4utils_spawn_process_v(sel4utils_process_t *process, vka_t *vka, vspace_t *vs
         return -1;
     }
 
-#if defined(CONFIG_ARCH_IA32) || defined(CONFIG_ARCH_ARM) || defined(CONFIG_X86_64)
+#if defined(CONFIG_ARCH_IA32) || defined(CONFIG_ARCH_ARM) || defined(CONFIG_X86_64) || defined(CONFIG_ARCH_RISCV)
     /* construct initial stack frame */
     /* Null terminate aux */
     error = sel4utils_stack_write_constant(vspace, &process->vspace, vka, 0, &stack_top);
@@ -316,6 +316,10 @@ sel4utils_spawn_process_v(sel4utils_process_t *process, vka_t *vka, vspace_t *vs
 #elif defined(CONFIG_ARCH_ARM)
     context.sp = stack_top;
     context.pc = (seL4_Word)process->entry_point;
+#elif defined(CONFIG_ARCH_RISCV)
+    context.sp = stack_top;
+    /* FIXME */
+    context.ra = (seL4_Word)process->entry_point;
 #else
 #error Not implemented yet
 #endif
